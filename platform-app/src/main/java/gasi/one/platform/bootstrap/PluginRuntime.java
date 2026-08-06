@@ -1,0 +1,17 @@
+package gasi.one.platform.bootstrap;
+
+import org.pf4j.PluginManager;
+
+import gasi.one.platform.infrastructure.classloader.CompositeClassLoader;
+
+/**
+ * Runtime objects created during plugin bootstrap.
+ *
+ * @param pluginManager the PF4J plugin manager
+ * @param classLoader   the composite application and plugin classloader
+ * @since 1.0.0
+ */
+public record PluginRuntime(
+        PluginManager pluginManager,
+        CompositeClassLoader classLoader) {
+}
