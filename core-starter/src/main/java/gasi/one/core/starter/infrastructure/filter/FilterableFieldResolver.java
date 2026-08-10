@@ -10,8 +10,10 @@ import gasi.one.core.api.common.exception.BusinessException;
 /**
  * Resolves public API filter and sort fields to JPA entity field names.
  *
- * <p>The resolver scans {@link Filterable} annotations on the entity class and
- * its superclasses, then caches the resolved mapping per entity class.</p>
+ * <p>
+ * Entity fields are filterable and sortable by their Java field names,
+ * including nested paths such as {@code employee.id}.
+ * </p>
  *
  * @since 1.0.0
  */
@@ -29,8 +31,7 @@ public final class FilterableFieldResolver {
      * @param entityClass the JPA entity class
      * @param publicField the field name received from the API
      * @return the actual Java field name on the entity
-     * @throws BusinessException if the field is blank or not annotated as
-     *                           filterable
+     * @throws BusinessException if the field is blank or does not exist
      */
     public static String resolve(Class<?> entityClass, String publicField) {
         if (publicField == null || publicField.isBlank()) {
@@ -88,18 +89,9 @@ public final class FilterableFieldResolver {
 
         while (current != null && current != Object.class) {
             for (Field field : current.getDeclaredFields()) {
-                Filterable filterable = field.getAnnotation(Filterable.class);
-                if (filterable == null) {
-                    continue;
-                }
-
-                String publicName = filterable.alias().isBlank()
-                        ? field.getName()
-                        : filterable.alias();
-
-                String previous = fields.putIfAbsent(publicName, field.getName());
+                String previous = fields.putIfAbsent(field.getName(), field.getName());
                 if (previous != null && !previous.equals(field.getName())) {
-                    throw new IllegalStateException("Duplicate filter alias '" + publicName
+                    throw new IllegalStateException("Duplicate filter field '" + field.getName()
                             + "' on entity " + entityClass.getName());
                 }
             }

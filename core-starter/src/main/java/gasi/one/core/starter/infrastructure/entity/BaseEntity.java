@@ -23,7 +23,6 @@ import lombok.Data;
 import lombok.experimental.SuperBuilder;
 
 import gasi.one.core.api.resource.model.LifecycleStatus;
-import gasi.one.core.starter.infrastructure.filter.Filterable;
 
 /**
  * Base JPA entity with auto-generated Long ID, audit fields, and optimistic
@@ -46,44 +45,32 @@ public abstract class BaseEntity {
     }
 
     @Id
-    @Filterable
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
-    @Filterable
     private Instant createdAt;
 
     @LastModifiedDate
     @Column(name = "updated_at")
-    @Filterable
     private Instant updatedAt;
 
     @CreatedBy
     @Column(name = "created_by", updatable = false, length = 50)
-    @Filterable
     private String createdBy;
 
     @LastModifiedBy
     @Column(name = "updated_by", length = 50)
-    @Filterable
     private String updatedBy;
-
-    @Column(name = "source_id")
-    @Filterable
-    private Long sourceId;
-
-    @Enumerated(EnumType.ORDINAL)
-    @Column(name = "lifecycle_status")
-    @Filterable
-    @Builder.Default
-    private LifecycleStatus lifecycleStatus = LifecycleStatus.ACTIVE;
 
     @Version
     @Column(name = "version")
     private Integer version;
 
-    @Column(name = "import_batch_id")
-    private Long importBatchId;
+    @Enumerated(EnumType.ORDINAL)
+    @Column(name = "lifecycle_status")
+    @Builder.Default
+    private LifecycleStatus lifecycleStatus = LifecycleStatus.ACTIVE;
+
 }

@@ -17,8 +17,6 @@ import org.mapstruct.Mapping;
 @Mapping(target = "createdBy", ignore = true)
 @Mapping(target = "updatedBy", ignore = true)
 @Mapping(target = "version", ignore = true)
-@Mapping(target = "importBatchId", ignore = true)
-@Mapping(target = "sourceId", ignore = true)
 @Mapping(target = "lifecycleStatus", ignore = true)
 public @interface IgnoreManagedFields {
 }

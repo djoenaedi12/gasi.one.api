@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 
 import gasi.one.core.api.resource.model.BaseModel;
 import gasi.one.core.api.resource.port.inbound.BaseService;
+import gasi.one.core.api.resource.hook.ResourceRequestContext;
+import gasi.one.core.api.resource.hook.ResourceRequestContextHolder;
 import gasi.one.core.api.resource.hook.ResourceControllerHook;
 import gasi.one.core.api.common.dto.ApiResponse;
 import gasi.one.core.api.common.id.IdCodec;
@@ -119,10 +121,16 @@ public abstract class BaseController<D extends BaseModel, CRQ, URQ, SRS, DRS>
     @PreAuthorize("hasPermission(this, 'CREATE')")
     public ApiResponse<DRS> create(@Valid @RequestBody CRQ request) {
         ResourceControllerHook<CRQ, URQ, SRS, DRS> hook = controllerHook();
-        hook.beforeCreateRequest(request);
-        ApiResponse<DRS> response = ApiResponse.ok(service.create(request));
-        hook.afterCreateResponse(response, request);
-        return response;
+        ResourceRequestContext context = requestContext();
+        ResourceRequestContextHolder.set(context);
+        try {
+            hook.beforeCreateRequest(request, context);
+            ApiResponse<DRS> response = ApiResponse.ok(service.create(request));
+            hook.afterCreateResponse(response, request, context);
+            return response;
+        } finally {
+            ResourceRequestContextHolder.clear();
+        }
     }
 
     /**
@@ -136,10 +144,16 @@ public abstract class BaseController<D extends BaseModel, CRQ, URQ, SRS, DRS>
     @PreAuthorize("hasPermission(this, 'UPDATE')")
     public ApiResponse<DRS> update(@PathVariable String id, @Valid @RequestBody URQ request) {
         ResourceControllerHook<CRQ, URQ, SRS, DRS> hook = controllerHook();
-        hook.beforeUpdateRequest(id, request);
-        ApiResponse<DRS> response = ApiResponse.ok(service.update(getIdCodec().decode(id), request));
-        hook.afterUpdateResponse(response, id, request);
-        return response;
+        ResourceRequestContext context = requestContext();
+        ResourceRequestContextHolder.set(context);
+        try {
+            hook.beforeUpdateRequest(id, request, context);
+            ApiResponse<DRS> response = ApiResponse.ok(service.update(getIdCodec().decode(id), request));
+            hook.afterUpdateResponse(response, id, request, context);
+            return response;
+        } finally {
+            ResourceRequestContextHolder.clear();
+        }
     }
 
     /**
@@ -153,10 +167,16 @@ public abstract class BaseController<D extends BaseModel, CRQ, URQ, SRS, DRS>
     @PreAuthorize("hasPermission(this, 'DELETE')")
     public ApiResponse<Void> delete(@PathVariable String id) {
         ResourceControllerHook<CRQ, URQ, SRS, DRS> hook = controllerHook();
-        hook.beforeDeleteRequest(id);
-        service.delete(getIdCodec().decode(id));
-        ApiResponse<Void> response = ApiResponse.noContent();
-        hook.afterDeleteResponse(response, id);
-        return response;
+        ResourceRequestContext context = requestContext();
+        ResourceRequestContextHolder.set(context);
+        try {
+            hook.beforeDeleteRequest(id, context);
+            service.delete(getIdCodec().decode(id));
+            ApiResponse<Void> response = ApiResponse.noContent();
+            hook.afterDeleteResponse(response, id, context);
+            return response;
+        } finally {
+            ResourceRequestContextHolder.clear();
+        }
     }
 }

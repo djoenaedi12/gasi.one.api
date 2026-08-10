@@ -19,9 +19,10 @@ import jakarta.persistence.criteria.Root;
 /**
  * Converts a {@link GenericFilter} tree into a JPA {@link Specification}.
  *
- * <p>Simple filter fields are resolved through {@link FilterableFieldResolver},
- * so only entity fields annotated with
- * {@link gasi.one.core.starter.infrastructure.filter.Filterable} are accepted.</p>
+ * <p>
+ * Simple filter fields are resolved through {@link FilterableFieldResolver}
+ * against entity field names.
+ * </p>
  *
  * @param <T> entity type
  * @since 1.0.0

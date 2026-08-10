@@ -71,7 +71,7 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ApiResponse<Void> handleEntityNotFound(EntityNotFoundException ex) {
         LOG.warn("Entity not found: {}", ex.getMessage());
-        return ApiResponse.error(HttpStatus.NOT_FOUND.value(), "Entity not found",
+        return ApiResponse.error("Entity not found",
                 List.of(ErrorDetail.of("ENTITY_NOT_FOUND", ex.getMessage())));
     }
 
@@ -86,7 +86,7 @@ public class GlobalExceptionHandler {
     public ApiResponse<Void> handleNoHandlerFound(NoHandlerFoundException ex) {
         String message = String.format("No endpoint found: %s %s", ex.getHttpMethod(), ex.getRequestURL());
         LOG.warn("No handler found: {}", message);
-        return ApiResponse.error(HttpStatus.NOT_FOUND.value(), "No endpoint found",
+        return ApiResponse.error("No endpoint found",
                 List.of(ErrorDetail.of("NO_HANDLER", message)));
     }
 
@@ -105,7 +105,7 @@ public class GlobalExceptionHandler {
         String message = String.format("Method '%s' is not supported. Supported methods: %s",
                 ex.getMethod(), supported);
         LOG.warn("Method not supported: {}", message);
-        return ApiResponse.error(HttpStatus.METHOD_NOT_ALLOWED.value(), "Method not allowed",
+        return ApiResponse.error("Method not allowed",
                 List.of(ErrorDetail.of("METHOD_NOT_ALLOWED", message)));
     }
 
@@ -119,8 +119,7 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.UNPROCESSABLE_CONTENT)
     public ApiResponse<Void> handleBusinessException(BusinessException ex) {
         LOG.warn("Business rule violation: {}", ex.getMessage());
-        return ApiResponse.error(HttpStatus.UNPROCESSABLE_CONTENT.value(),
-                "Business rule violation", ex.getErrorDetails());
+        return ApiResponse.error("Business rule violation", ex.getErrorDetails());
     }
 
     /**
@@ -134,7 +133,7 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.CONFLICT)
     public ApiResponse<Void> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
         LOG.warn("Data integrity violation: {}", ex.getMostSpecificCause().getMessage());
-        return ApiResponse.error(HttpStatus.CONFLICT.value(), "Data conflicts with an existing record",
+        return ApiResponse.error("Data conflicts with an existing record",
                 List.of(ErrorDetail.of("DATA_CONFLICT", "A unique or reference constraint was violated")));
     }
 
@@ -148,8 +147,7 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.CONFLICT)
     public ApiResponse<Void> handleOptimisticLock(ObjectOptimisticLockingFailureException ex) {
         LOG.warn("Optimistic lock conflict: {}", ex.getMessage());
-        return ApiResponse.error(HttpStatus.CONFLICT.value(),
-                "Record was modified by someone else; reload and try again",
+        return ApiResponse.error("Record was modified by someone else; reload and try again",
                 List.of(ErrorDetail.of("OPTIMISTIC_LOCK_CONFLICT", "The record was changed by another request")));
     }
 
@@ -164,7 +162,7 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ApiResponse<Void> handleAuthenticationFailed(AuthenticationException ex) {
         LOG.warn("Authentication failed: {}", ex.getMessage());
-        return ApiResponse.error(HttpStatus.UNAUTHORIZED.value(), "Invalid credentials",
+        return ApiResponse.error("Invalid credentials",
                 List.of(ErrorDetail.of("UNAUTHORIZED", "Invalid credentials")));
     }
 
@@ -187,12 +185,12 @@ public class GlobalExceptionHandler {
         if (isAnonymous) {
             LOG.warn("Unauthenticated access denied");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ApiResponse.error(HttpStatus.UNAUTHORIZED.value(), "Unauthorized",
+                    .body(ApiResponse.error("Unauthorized",
                             List.of(ErrorDetail.of("UNAUTHORIZED", "Unauthorized"))));
         }
         LOG.warn("Authorization denied: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(ApiResponse.error(HttpStatus.FORBIDDEN.value(), "Access denied",
+                .body(ApiResponse.error("Access denied",
                         List.of(ErrorDetail.of("ACCESS_DENIED", "Access denied"))));
     }
 
@@ -209,7 +207,7 @@ public class GlobalExceptionHandler {
                 .map(fe -> ErrorDetail.of(fe.getCode(), fe.getField(), fe.getDefaultMessage()))
                 .toList();
         LOG.warn("Validation failed: {}", errors);
-        return ApiResponse.error(HttpStatus.BAD_REQUEST.value(), "Validation failed", errors);
+        return ApiResponse.error("Validation failed", errors);
     }
 
     /**
@@ -229,7 +227,7 @@ public class GlobalExceptionHandler {
                         v.getMessage()))
                 .toList();
         LOG.warn("Constraint violation: {}", errors);
-        return ApiResponse.error(HttpStatus.BAD_REQUEST.value(), "Validation failed", errors);
+        return ApiResponse.error("Validation failed", errors);
     }
 
     /**
@@ -250,7 +248,7 @@ public class GlobalExceptionHandler {
                 })
                 .toList();
         LOG.warn("Method validation failed: {}", errors);
-        return ApiResponse.error(HttpStatus.BAD_REQUEST.value(), "Validation failed", errors);
+        return ApiResponse.error("Validation failed", errors);
     }
 
     /**
@@ -264,7 +262,7 @@ public class GlobalExceptionHandler {
     public ApiResponse<Void> handleMessageNotReadable(HttpMessageNotReadableException ex) {
         String detail = extractReadableDetail(ex);
         LOG.warn("Malformed request body: {}", detail);
-        return ApiResponse.error(HttpStatus.BAD_REQUEST.value(), "Malformed request body",
+        return ApiResponse.error("Malformed request body",
                 List.of(ErrorDetail.of("MALFORMED_BODY", detail)));
     }
 
@@ -281,7 +279,7 @@ public class GlobalExceptionHandler {
                 ex.getName(),
                 ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : "unknown");
         LOG.warn("Type mismatch: {}", message);
-        return ApiResponse.error(HttpStatus.BAD_REQUEST.value(), "Type mismatch",
+        return ApiResponse.error("Type mismatch",
                 List.of(ErrorDetail.of("TYPE_MISMATCH", ex.getName(), message)));
     }
 
@@ -295,7 +293,7 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ApiResponse<Void> handleGeneric(Exception ex) {
         LOG.error("Unexpected error", ex);
-        return ApiResponse.error(HttpStatus.INTERNAL_SERVER_ERROR.value(), "An unexpected error occurred",
+        return ApiResponse.error("An unexpected error occurred",
                 List.of(ErrorDetail.of("INTERNAL_ERROR", "An unexpected error occurred")));
     }
 

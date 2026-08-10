@@ -2,15 +2,23 @@ package gasi.one.core.starter.presentation.controller;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.web.servlet.HandlerMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 import gasi.one.core.api.common.dto.PageResult;
 import gasi.one.core.api.resource.port.inbound.BaseReadService;
+import gasi.one.core.api.resource.hook.ResourceRequestContext;
+import gasi.one.core.api.resource.hook.ResourceRequestContextHolder;
 import gasi.one.core.api.resource.hook.ResourceControllerHook;
 import gasi.one.core.api.common.dto.ApiResponse;
 import gasi.one.core.api.common.query.QueryRequest;
@@ -112,20 +120,20 @@ public abstract class BaseReadController<SRS, DRS> {
      * Default response projection for query list/page when callers omit fields.
      *
      * <p>
-     * Subclasses should override this with resource-specific default table
-     * columns. The fallback keeps only {@code id} to avoid accidentally exposing
-     * a full summary DTO on unprojected requests.
+     * Subclasses should override this with resource-specific projection fields.
+     * The fallback keeps only {@code id} to avoid accidentally exposing a full
+     * summary DTO on unprojected requests.
      * </p>
      *
      * @return default public DTO field names
      */
-    protected List<String> getDefaultSummaryFields() {
+    protected List<String> getDefaultProjectionFields() {
         return List.of("id");
     }
 
     private List<String> resolveProjectionFields(QueryRequest request) {
         return request.getFields() == null || request.getFields().isEmpty()
-                ? getDefaultSummaryFields()
+                ? getDefaultProjectionFields()
                 : request.getFields();
     }
 
@@ -139,10 +147,16 @@ public abstract class BaseReadController<SRS, DRS> {
     @PreAuthorize("hasPermission(this, 'READ')")
     public ApiResponse<DRS> findById(@PathVariable String id) {
         ResourceControllerHook<Object, Object, SRS, DRS> hook = controllerHook();
-        hook.beforeFindByIdRequest(id);
-        ApiResponse<DRS> response = ApiResponse.ok(service.findById(idCodec.decode(id)));
-        hook.afterFindByIdResponse(response, id);
-        return response;
+        ResourceRequestContext context = requestContext();
+        ResourceRequestContextHolder.set(context);
+        try {
+            hook.beforeFindByIdRequest(id, context);
+            ApiResponse<DRS> response = ApiResponse.ok(service.findById(idCodec.decode(id)));
+            hook.afterFindByIdResponse(response, id, context);
+            return response;
+        } finally {
+            ResourceRequestContextHolder.clear();
+        }
     }
 
     /**
@@ -155,10 +169,16 @@ public abstract class BaseReadController<SRS, DRS> {
     @PreAuthorize("hasPermission(this, 'READ')")
     public ApiResponse<DRS> findBy(@RequestBody QueryRequest request) {
         ResourceControllerHook<Object, Object, SRS, DRS> hook = controllerHook();
-        hook.beforeFindByRequest(request);
-        ApiResponse<DRS> response = ApiResponse.ok(service.findBy(request.getFilter()));
-        hook.afterFindByResponse(response, request);
-        return response;
+        ResourceRequestContext context = requestContext();
+        ResourceRequestContextHolder.set(context);
+        try {
+            hook.beforeFindByRequest(request, context);
+            ApiResponse<DRS> response = ApiResponse.ok(service.findBy(request.getFilter()));
+            hook.afterFindByResponse(response, request, context);
+            return response;
+        } finally {
+            ResourceRequestContextHolder.clear();
+        }
     }
 
     /**
@@ -171,13 +191,19 @@ public abstract class BaseReadController<SRS, DRS> {
     @PreAuthorize("hasPermission(this, 'READ')")
     public ApiResponse<List<?>> findAll(@RequestBody QueryRequest request) {
         ResourceControllerHook<Object, Object, SRS, DRS> hook = controllerHook();
-        hook.beforeFindAllRequest(request);
-        List<SRS> result = service.findAll(
-                request.getFilter(),
-                request.getSorts() != null ? request.getSorts() : Collections.emptyList());
-        ApiResponse<List<?>> response = ApiResponse.ok(ResponseProjection.projectList(result, resolveProjectionFields(request)));
-        hook.afterFindAllResponse(response, request);
-        return response;
+        ResourceRequestContext context = requestContext();
+        ResourceRequestContextHolder.set(context);
+        try {
+            hook.beforeFindAllRequest(request, context);
+            List<SRS> result = service.findAll(
+                    request.getFilter(),
+                    request.getSorts() != null ? request.getSorts() : Collections.emptyList());
+            ApiResponse<List<?>> response = ApiResponse.ok(ResponseProjection.projectList(result, resolveProjectionFields(request)));
+            hook.afterFindAllResponse(response, request, context);
+            return response;
+        } finally {
+            ResourceRequestContextHolder.clear();
+        }
     }
 
     /**
@@ -191,53 +217,21 @@ public abstract class BaseReadController<SRS, DRS> {
     public ApiResponse<PageResult<?>> findAllPaged(
             @RequestBody QueryRequest request) {
         ResourceControllerHook<Object, Object, SRS, DRS> hook = controllerHook();
-        hook.beforeFindAllPagedRequest(request);
-        PageResult<SRS> result = service.findAll(
-                request.normalizedPage(),
-                request.normalizedSize(),
-                request.getFilter(),
-                request.getSorts() != null ? request.getSorts() : Collections.emptyList());
-        ApiResponse<PageResult<?>> response = ApiResponse.ok(ResponseProjection.projectPage(result, resolveProjectionFields(request)));
-        hook.afterFindAllPagedResponse(response, request);
-        return response;
-    }
-
-    /**
-     * Finds lookup rows with pagination and lookup-specific projection defaults.
-     *
-     * @param request the query request containing filter, sort, pagination,
-     *                and optional projection fields
-     * @return a projected page of lookup rows wrapped in {@link ApiResponse}
-     */
-    @PostMapping("/lookup/query/page")
-    @PreAuthorize("hasPermission(this, 'LOOKUP')")
-    public ApiResponse<PageResult<?>> lookupPaged(@RequestBody QueryRequest request) {
-        ResourceControllerHook<Object, Object, SRS, DRS> hook = controllerHook();
-        hook.beforeLookupPagedRequest(request);
-        PageResult<SRS> result = service.findAll(
-                request.normalizedPage(),
-                request.normalizedSize(),
-                request.getFilter(),
-                request.getSorts() != null ? request.getSorts() : Collections.emptyList());
-
-        ApiResponse<PageResult<?>> response = ApiResponse.ok(ResponseProjection.projectPage(result, resolveLookupFields(request)));
-        hook.afterLookupPagedResponse(response, request);
-        return response;
-    }
-
-    /**
-     * Default response projection for lookup endpoints when callers omit fields.
-     *
-     * @return default public DTO field names for lookup responses
-     */
-    protected List<String> getDefaultLookupFields() {
-        return getDefaultSummaryFields();
-    }
-
-    private List<String> resolveLookupFields(QueryRequest request) {
-        return request.getFields() == null || request.getFields().isEmpty()
-                ? getDefaultLookupFields()
-                : request.getFields();
+        ResourceRequestContext context = requestContext();
+        ResourceRequestContextHolder.set(context);
+        try {
+            hook.beforeFindAllPagedRequest(request, context);
+            PageResult<SRS> result = service.findAll(
+                    request.normalizedPage(),
+                    request.normalizedSize(),
+                    request.getFilter(),
+                    request.getSorts() != null ? request.getSorts() : Collections.emptyList());
+            ApiResponse<PageResult<?>> response = ApiResponse.ok(ResponseProjection.projectPage(result, resolveProjectionFields(request)));
+            hook.afterFindAllPagedResponse(response, request, context);
+            return response;
+        } finally {
+            ResourceRequestContextHolder.clear();
+        }
     }
 
     protected <CRQ, URQ> ResourceControllerHook<CRQ, URQ, SRS, DRS> controllerHook() {
@@ -245,5 +239,24 @@ public abstract class BaseReadController<SRS, DRS> {
             return ResourceControllerHook.noop();
         }
         return hookRegistry.resolve(resourceType());
+    }
+
+    protected ResourceRequestContext requestContext() {
+        if (!(RequestContextHolder.getRequestAttributes() instanceof ServletRequestAttributes attributes)) {
+            return ResourceRequestContext.empty();
+        }
+        HttpServletRequest request = attributes.getRequest();
+        Object value = request.getAttribute(HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE);
+        Map<?, ?> pathVariables = value instanceof Map<?, ?> variables ? variables : Map.of();
+
+        return ResourceRequestContext.builder()
+                .pathVariables(pathVariables)
+                .method(request.getMethod())
+                .requestUri(request.getRequestURI())
+                .requestUrl(request.getRequestURL().toString())
+                .queryString(request.getQueryString())
+                .contextPath(request.getContextPath())
+                .servletPath(request.getServletPath())
+                .build();
     }
 }

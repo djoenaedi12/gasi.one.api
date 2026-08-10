@@ -2,8 +2,8 @@ package gasi.one.core.api.resource.hook;
 
 import java.util.List;
 
-import gasi.one.core.api.common.dto.PageResult;
 import gasi.one.core.api.common.dto.ApiResponse;
+import gasi.one.core.api.common.dto.PageResult;
 import gasi.one.core.api.common.query.QueryRequest;
 
 /**
@@ -17,52 +17,50 @@ import gasi.one.core.api.common.query.QueryRequest;
  */
 public interface ResourceControllerHook<CRQ, URQ, SRS, DRS> {
 
-    default void beforeFindByIdRequest(String id) {
+    default void beforeFindByIdRequest(String id, ResourceRequestContext context) {
     }
 
-    default void afterFindByIdResponse(ApiResponse<DRS> response, String id) {
+    default void afterFindByIdResponse(ApiResponse<DRS> response, String id, ResourceRequestContext context) {
     }
 
-    default void beforeFindByRequest(QueryRequest request) {
+    default void beforeFindByRequest(QueryRequest request, ResourceRequestContext context) {
     }
 
-    default void afterFindByResponse(ApiResponse<DRS> response, QueryRequest request) {
+    default void afterFindByResponse(ApiResponse<DRS> response, QueryRequest request,
+            ResourceRequestContext context) {
     }
 
-    default void beforeFindAllRequest(QueryRequest request) {
+    default void beforeFindAllRequest(QueryRequest request, ResourceRequestContext context) {
     }
 
-    default void afterFindAllResponse(ApiResponse<List<?>> response, QueryRequest request) {
+    default void afterFindAllResponse(ApiResponse<List<?>> response, QueryRequest request,
+            ResourceRequestContext context) {
     }
 
-    default void beforeFindAllPagedRequest(QueryRequest request) {
+    default void beforeFindAllPagedRequest(QueryRequest request, ResourceRequestContext context) {
     }
 
-    default void afterFindAllPagedResponse(ApiResponse<PageResult<?>> response, QueryRequest request) {
+    default void afterFindAllPagedResponse(ApiResponse<PageResult<?>> response, QueryRequest request,
+            ResourceRequestContext context) {
     }
 
-    default void beforeLookupPagedRequest(QueryRequest request) {
+    default void beforeCreateRequest(CRQ request, ResourceRequestContext context) {
     }
 
-    default void afterLookupPagedResponse(ApiResponse<PageResult<?>> response, QueryRequest request) {
+    default void afterCreateResponse(ApiResponse<DRS> response, CRQ request, ResourceRequestContext context) {
     }
 
-    default void beforeCreateRequest(CRQ request) {
+    default void beforeUpdateRequest(String id, URQ request, ResourceRequestContext context) {
     }
 
-    default void afterCreateResponse(ApiResponse<DRS> response, CRQ request) {
+    default void afterUpdateResponse(ApiResponse<DRS> response, String id, URQ request,
+            ResourceRequestContext context) {
     }
 
-    default void beforeUpdateRequest(String id, URQ request) {
+    default void beforeDeleteRequest(String id, ResourceRequestContext context) {
     }
 
-    default void afterUpdateResponse(ApiResponse<DRS> response, String id, URQ request) {
-    }
-
-    default void beforeDeleteRequest(String id) {
-    }
-
-    default void afterDeleteResponse(ApiResponse<Void> response, String id) {
+    default void afterDeleteResponse(ApiResponse<Void> response, String id, ResourceRequestContext context) {
     }
 
     static <CRQ, URQ, SRS, DRS> ResourceControllerHook<CRQ, URQ, SRS, DRS> noop() {
@@ -77,83 +75,79 @@ public interface ResourceControllerHook<CRQ, URQ, SRS, DRS> {
         }
         return new ResourceControllerHook<>() {
             @Override
-            public void beforeFindByIdRequest(String id) {
-                hooks.forEach(hook -> hook.beforeFindByIdRequest(id));
+            public void beforeFindByIdRequest(String id, ResourceRequestContext context) {
+                hooks.forEach(hook -> hook.beforeFindByIdRequest(id, context));
             }
 
             @Override
-            public void afterFindByIdResponse(ApiResponse<DRS> response, String id) {
-                hooks.forEach(hook -> hook.afterFindByIdResponse(response, id));
+            public void afterFindByIdResponse(ApiResponse<DRS> response, String id,
+                    ResourceRequestContext context) {
+                hooks.forEach(hook -> hook.afterFindByIdResponse(response, id, context));
             }
 
             @Override
-            public void beforeFindByRequest(QueryRequest request) {
-                hooks.forEach(hook -> hook.beforeFindByRequest(request));
+            public void beforeFindByRequest(QueryRequest request, ResourceRequestContext context) {
+                hooks.forEach(hook -> hook.beforeFindByRequest(request, context));
             }
 
             @Override
-            public void afterFindByResponse(ApiResponse<DRS> response, QueryRequest request) {
-                hooks.forEach(hook -> hook.afterFindByResponse(response, request));
+            public void afterFindByResponse(ApiResponse<DRS> response, QueryRequest request,
+                    ResourceRequestContext context) {
+                hooks.forEach(hook -> hook.afterFindByResponse(response, request, context));
             }
 
             @Override
-            public void beforeFindAllRequest(QueryRequest request) {
-                hooks.forEach(hook -> hook.beforeFindAllRequest(request));
+            public void beforeFindAllRequest(QueryRequest request, ResourceRequestContext context) {
+                hooks.forEach(hook -> hook.beforeFindAllRequest(request, context));
             }
 
             @Override
-            public void afterFindAllResponse(ApiResponse<List<?>> response, QueryRequest request) {
-                hooks.forEach(hook -> hook.afterFindAllResponse(response, request));
+            public void afterFindAllResponse(ApiResponse<List<?>> response, QueryRequest request,
+                    ResourceRequestContext context) {
+                hooks.forEach(hook -> hook.afterFindAllResponse(response, request, context));
             }
 
             @Override
-            public void beforeFindAllPagedRequest(QueryRequest request) {
-                hooks.forEach(hook -> hook.beforeFindAllPagedRequest(request));
+            public void beforeFindAllPagedRequest(QueryRequest request, ResourceRequestContext context) {
+                hooks.forEach(hook -> hook.beforeFindAllPagedRequest(request, context));
             }
 
             @Override
-            public void afterFindAllPagedResponse(ApiResponse<PageResult<?>> response, QueryRequest request) {
-                hooks.forEach(hook -> hook.afterFindAllPagedResponse(response, request));
+            public void afterFindAllPagedResponse(ApiResponse<PageResult<?>> response, QueryRequest request,
+                    ResourceRequestContext context) {
+                hooks.forEach(hook -> hook.afterFindAllPagedResponse(response, request, context));
             }
 
             @Override
-            public void beforeLookupPagedRequest(QueryRequest request) {
-                hooks.forEach(hook -> hook.beforeLookupPagedRequest(request));
+            public void beforeCreateRequest(CRQ request, ResourceRequestContext context) {
+                hooks.forEach(hook -> hook.beforeCreateRequest(request, context));
             }
 
             @Override
-            public void afterLookupPagedResponse(ApiResponse<PageResult<?>> response, QueryRequest request) {
-                hooks.forEach(hook -> hook.afterLookupPagedResponse(response, request));
+            public void afterCreateResponse(ApiResponse<DRS> response, CRQ request,
+                    ResourceRequestContext context) {
+                hooks.forEach(hook -> hook.afterCreateResponse(response, request, context));
             }
 
             @Override
-            public void beforeCreateRequest(CRQ request) {
-                hooks.forEach(hook -> hook.beforeCreateRequest(request));
+            public void beforeUpdateRequest(String id, URQ request, ResourceRequestContext context) {
+                hooks.forEach(hook -> hook.beforeUpdateRequest(id, request, context));
             }
 
             @Override
-            public void afterCreateResponse(ApiResponse<DRS> response, CRQ request) {
-                hooks.forEach(hook -> hook.afterCreateResponse(response, request));
+            public void afterUpdateResponse(ApiResponse<DRS> response, String id, URQ request,
+                    ResourceRequestContext context) {
+                hooks.forEach(hook -> hook.afterUpdateResponse(response, id, request, context));
             }
 
             @Override
-            public void beforeUpdateRequest(String id, URQ request) {
-                hooks.forEach(hook -> hook.beforeUpdateRequest(id, request));
+            public void beforeDeleteRequest(String id, ResourceRequestContext context) {
+                hooks.forEach(hook -> hook.beforeDeleteRequest(id, context));
             }
 
             @Override
-            public void afterUpdateResponse(ApiResponse<DRS> response, String id, URQ request) {
-                hooks.forEach(hook -> hook.afterUpdateResponse(response, id, request));
-            }
-
-            @Override
-            public void beforeDeleteRequest(String id) {
-                hooks.forEach(hook -> hook.beforeDeleteRequest(id));
-            }
-
-            @Override
-            public void afterDeleteResponse(ApiResponse<Void> response, String id) {
-                hooks.forEach(hook -> hook.afterDeleteResponse(response, id));
+            public void afterDeleteResponse(ApiResponse<Void> response, String id, ResourceRequestContext context) {
+                hooks.forEach(hook -> hook.afterDeleteResponse(response, id, context));
             }
         };
     }

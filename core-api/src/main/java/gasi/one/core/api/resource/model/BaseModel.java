@@ -28,11 +28,9 @@ public abstract class BaseModel {
     private Instant updatedAt;
     private String createdBy;
     private String updatedBy;
-    private Long sourceId;
+    private Integer version;
     @Builder.Default
     private LifecycleStatus lifecycleStatus = LifecycleStatus.ACTIVE;
-    private Integer version;
-    private Long importBatchId;
 
     /**
      * Creates an empty base model.
