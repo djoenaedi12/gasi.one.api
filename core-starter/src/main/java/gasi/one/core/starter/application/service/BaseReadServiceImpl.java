@@ -18,7 +18,7 @@ import gasi.one.core.api.resource.port.outbound.BaseRepositoryPort;
 import gasi.one.core.starter.application.hook.ResourceMapperHookRegistry;
 import gasi.one.core.starter.application.hook.ResourceServiceHookRegistry;
 import gasi.one.core.starter.application.mapper.BaseReadDtoMapper;
-import gasi.one.core.starter.infrastructure.i18n.MessageUtil;
+import gasi.one.core.starter.infrastructure.i18n.MessageResolver;
 
 /**
  * Generic transactional implementation of {@link BaseReadService}.
@@ -45,7 +45,7 @@ public abstract class BaseReadServiceImpl<D extends BaseModel, SRS, DRS>
     protected final BaseReadDtoMapper<D, SRS, DRS> mapper;
 
     /** Localized message helper for user-facing errors. */
-    protected final MessageUtil messageUtil;
+    protected final MessageResolver messageResolver;
 
     /** Public ID codec used in responses and error messages. */
     protected final IdCodec idCodec;
@@ -62,20 +62,20 @@ public abstract class BaseReadServiceImpl<D extends BaseModel, SRS, DRS>
      *
      * @param repositoryPort     repository port for domain persistence
      * @param mapper             mapper from domain models to response DTOs
-     * @param messageUtil        localized message helper
+     * @param messageResolver    localized message helper
      * @param idCodec            public ID codec
      * @param hookRegistry       registry for generated and custom service hooks
      * @param mapperHookRegistry registry for generated and custom mapper hooks
      */
     protected BaseReadServiceImpl(BaseRepositoryPort<D> repositoryPort,
             BaseReadDtoMapper<D, SRS, DRS> mapper,
-            MessageUtil messageUtil,
+            MessageResolver messageResolver,
             IdCodec idCodec,
             ResourceServiceHookRegistry hookRegistry,
             ResourceMapperHookRegistry mapperHookRegistry) {
         this.repositoryPort = repositoryPort;
         this.mapper = mapper;
-        this.messageUtil = messageUtil;
+        this.messageResolver = messageResolver;
         this.idCodec = idCodec;
         this.hookRegistry = hookRegistry;
         this.mapperHookRegistry = mapperHookRegistry;
@@ -87,7 +87,7 @@ public abstract class BaseReadServiceImpl<D extends BaseModel, SRS, DRS>
         hook.beforeFindById(resourceType(), id);
         D domain = repositoryPort.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException(
-                        messageUtil.get("error.entity.notFound", resourceType(), idCodec.encode(id))));
+                        messageResolver.get("error.reference.notFound", resourceType(), idCodec.encode(id))));
         DRS response = toDetailResponse(domain);
         hook.afterFindByIdResponse(resourceType(), response, domain);
         return response;
@@ -99,7 +99,7 @@ public abstract class BaseReadServiceImpl<D extends BaseModel, SRS, DRS>
         hook.beforeFindBy(resourceType(), filter);
         D domain = repositoryPort.findBy(filter)
                 .orElseThrow(() -> new EntityNotFoundException(
-                        messageUtil.get("error.entity.notFound", resourceType(), "filter")));
+                        messageResolver.get("error.reference.notFound", resourceType(), "filter")));
         DRS response = toDetailResponse(domain);
         hook.afterFindByResponse(resourceType(), response, domain);
         return response;

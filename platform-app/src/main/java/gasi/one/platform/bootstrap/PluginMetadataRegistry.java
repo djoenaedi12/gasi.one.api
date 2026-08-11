@@ -67,5 +67,12 @@ public class PluginMetadataRegistry {
             String description,
             String version,
             List<String> basePackages) {
+
+        /**
+         * Creates plugin metadata.
+         */
+        public PluginModuleMetadata {
+            basePackages = List.copyOf(basePackages);
+        }
     }
 }

@@ -5,11 +5,11 @@ import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Component;
 
 /**
- * Spring-backed helper for resolving localized messages.
+ * Spring-backed resolver for localized messages.
  *
  * <p>
- * This component provides convenient methods to fetch messages based on the
- * current locale, with support for message arguments and default values.
+ * This component resolves message keys using the current locale, with support
+ * for message arguments and default values.
  * </p>
  *
  * <p>
@@ -22,16 +22,16 @@ import org.springframework.stereotype.Component;
  * @since 1.0.0
  */
 @Component
-public class MessageUtil {
+public class MessageResolver {
 
     private final MessageSource messageSource;
 
     /**
-     * Creates a message helper.
+     * Creates a message resolver.
      *
      * @param messageSource Spring message source
      */
-    public MessageUtil(MessageSource messageSource) {
+    public MessageResolver(MessageSource messageSource) {
         this.messageSource = messageSource;
     }
 

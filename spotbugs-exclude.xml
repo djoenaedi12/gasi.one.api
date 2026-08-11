@@ -52,6 +52,12 @@
         <Method name="&lt;init&gt;"/>
     </Match>
 
+    <!-- PF4J runtime singletons are intentionally shared with Spring bootstrap code -->
+    <Match>
+        <Class name="~.*PluginLifecycleManager|.*PluginMetadataRegistry|.*PluginRuntime"/>
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+    </Match>
+
     <!-- ClassLoader: custom classloaders intentionally override protected methods -->
     <Match>
         <Class name="~.*ClassLoader"/>

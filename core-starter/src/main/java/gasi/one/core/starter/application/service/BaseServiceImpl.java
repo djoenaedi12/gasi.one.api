@@ -14,7 +14,7 @@ import gasi.one.core.api.resource.port.outbound.BaseRepositoryPort;
 import gasi.one.core.starter.application.hook.ResourceMapperHookRegistry;
 import gasi.one.core.starter.application.hook.ResourceServiceHookRegistry;
 import gasi.one.core.starter.application.mapper.BaseDtoMapper;
-import gasi.one.core.starter.infrastructure.i18n.MessageUtil;
+import gasi.one.core.starter.infrastructure.i18n.MessageResolver;
 
 /**
  * Generic transactional implementation of {@link BaseService}.
@@ -48,18 +48,18 @@ public abstract class BaseServiceImpl<D extends BaseModel, CRQ, URQ, SRS, DRS>
      * @param repositoryPort     repository port for domain persistence
      * @param mapper             mapper between request/response DTOs and domain
      *                           models
-     * @param messageUtil        localized message helper
+     * @param messageResolver    localized message helper
      * @param idCodec            public ID codec
      * @param hookRegistry       registry for generated and custom service hooks
      * @param mapperHookRegistry registry for generated and custom mapper hooks
      */
     protected BaseServiceImpl(BaseRepositoryPort<D> repositoryPort,
             BaseDtoMapper<D, CRQ, URQ, SRS, DRS> mapper,
-            MessageUtil messageUtil,
+            MessageResolver messageResolver,
             IdCodec idCodec,
             ResourceServiceHookRegistry hookRegistry,
             ResourceMapperHookRegistry mapperHookRegistry) {
-        super(repositoryPort, mapper, messageUtil, idCodec, hookRegistry, mapperHookRegistry);
+        super(repositoryPort, mapper, messageResolver, idCodec, hookRegistry, mapperHookRegistry);
         this.mapper = mapper;
     }
 
@@ -116,7 +116,7 @@ public abstract class BaseServiceImpl<D extends BaseModel, CRQ, URQ, SRS, DRS>
     private D findRequired(Long id) {
         return repositoryPort.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException(
-                        messageUtil.get("error.entity.notFound", resourceType(), idCodec.encode(id))));
+                        messageResolver.get("error.reference.notFound", resourceType(), idCodec.encode(id))));
     }
 
 }
