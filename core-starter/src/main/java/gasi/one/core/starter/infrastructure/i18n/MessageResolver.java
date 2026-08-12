@@ -66,4 +66,16 @@ public class MessageResolver {
     public String getOrDefault(String key, String defaultMessage) {
         return messageSource.getMessage(key, null, defaultMessage, LocaleContextHolder.getLocale());
     }
+
+    /**
+     * Resolves a parameterized message with a fallback value.
+     *
+     * @param key            message key
+     * @param defaultMessage fallback message when the key is missing
+     * @param args           message arguments
+     * @return resolved message or fallback
+     */
+    public String getOrDefault(String key, String defaultMessage, Object... args) {
+        return messageSource.getMessage(key, args, defaultMessage, LocaleContextHolder.getLocale());
+    }
 }

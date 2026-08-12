@@ -24,10 +24,12 @@ import org.springframework.web.method.annotation.HandlerMethodValidationExceptio
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 
+import gasi.one.core.api.common.exception.BadRequestException;
 import gasi.one.core.api.common.exception.BusinessException;
 import gasi.one.core.api.common.exception.EntityNotFoundException;
 import gasi.one.core.api.common.exception.ErrorDetail;
 import gasi.one.core.api.common.dto.ApiResponse;
+import gasi.one.core.starter.infrastructure.i18n.MessageResolver;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Path;
 import tools.jackson.core.JacksonException;
@@ -54,11 +56,17 @@ import tools.jackson.databind.exc.UnrecognizedPropertyException;
 public class GlobalExceptionHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+    private static final String MESSAGE_KEY_PREFIX = "error.";
+
+    private final MessageResolver messageResolver;
 
     /**
      * Creates a global exception handler.
+     *
+     * @param messageResolver localized message helper
      */
-    public GlobalExceptionHandler() {
+    public GlobalExceptionHandler(MessageResolver messageResolver) {
+        this.messageResolver = messageResolver;
     }
 
     /**
@@ -119,7 +127,24 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.UNPROCESSABLE_CONTENT)
     public ApiResponse<Void> handleBusinessException(BusinessException ex) {
         LOG.warn("Business rule violation: {}", ex.getMessage());
-        return ApiResponse.error("Business rule violation", ex.getErrorDetails());
+        return ApiResponse.error(
+                messageResolver.getOrDefault("error.businessRuleViolation", "Business rule violation"),
+                resolveErrorDetails(ex.getErrorDetails()));
+    }
+
+    /**
+     * Handles invalid client requests (400).
+     *
+     * @param ex exception containing request validation errors
+     * @return API error response
+     */
+    @ExceptionHandler(BadRequestException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiResponse<Void> handleBadRequest(BadRequestException ex) {
+        LOG.warn("Bad request: {}", ex.getMessage());
+        return ApiResponse.error(
+                messageResolver.getOrDefault("error.badRequest", "Bad request"),
+                resolveErrorDetails(ex.getErrorDetails()));
     }
 
     /**
@@ -358,6 +383,23 @@ public class GlobalExceptionHandler {
             }
         }
         return sb.toString();
+    }
+
+    private List<ErrorDetail> resolveErrorDetails(List<ErrorDetail> details) {
+        return details.stream()
+                .map(this::resolveErrorDetail)
+                .toList();
+    }
+
+    private ErrorDetail resolveErrorDetail(ErrorDetail detail) {
+        String message = detail.getMessage();
+        if (message == null || !message.startsWith(MESSAGE_KEY_PREFIX)) {
+            return detail;
+        }
+        return ErrorDetail.of(
+                detail.getCode(),
+                detail.getField(),
+                messageResolver.getOrDefault(message, message, detail.getField()));
     }
 
     /**

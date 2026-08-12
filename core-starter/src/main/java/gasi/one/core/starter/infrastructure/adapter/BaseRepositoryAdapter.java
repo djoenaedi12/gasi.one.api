@@ -12,7 +12,10 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.dao.IncorrectResultSizeDataAccessException;
 
+import gasi.one.core.api.common.exception.BusinessException;
+import gasi.one.core.api.common.exception.ErrorDetail;
 import gasi.one.core.api.resource.model.BaseModel;
 import gasi.one.core.api.common.query.GenericFilter;
 import gasi.one.core.api.common.dto.PageResult;
@@ -246,7 +249,14 @@ public abstract class BaseRepositoryAdapter<D extends BaseModel, E extends BaseE
                 ? hook.applyRecordRules(resourceType(), filter)
                 : filter;
         Specification<E> spec = GenericSpecification.from(effectiveFilter);
-        return specExecutor.findOne(spec).map(mapper::toDomain);
+        try {
+            return specExecutor.findOne(spec).map(mapper::toDomain);
+        } catch (IncorrectResultSizeDataAccessException ex) {
+            throw BusinessException.of(ErrorDetail.of(
+                    "QUERY_ONE_NOT_UNIQUE",
+                    "filter",
+                    "error.query.one.notUnique"));
+        }
     }
 
     // ── Helpers ───────────────────────────────────────────

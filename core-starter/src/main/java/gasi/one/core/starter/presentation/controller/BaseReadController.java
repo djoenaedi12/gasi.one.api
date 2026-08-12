@@ -15,6 +15,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import jakarta.servlet.http.HttpServletRequest;
 
+import gasi.one.core.api.common.exception.BadRequestException;
+import gasi.one.core.api.common.exception.BusinessException;
+import gasi.one.core.api.common.exception.ErrorDetail;
 import gasi.one.core.api.common.dto.PageResult;
 import gasi.one.core.api.resource.port.inbound.BaseReadService;
 import gasi.one.core.api.resource.hook.ResourceRequestContext;
@@ -151,7 +154,7 @@ public abstract class BaseReadController<SRS, DRS> {
         ResourceRequestContextHolder.set(context);
         try {
             hook.beforeFindByIdRequest(id, context);
-            ApiResponse<DRS> response = ApiResponse.ok(service.findById(idCodec.decode(id)));
+            ApiResponse<DRS> response = ApiResponse.ok(service.findById(decodeId(id)));
             hook.afterFindByIdResponse(response, id, context);
             return response;
         } finally {
@@ -172,6 +175,7 @@ public abstract class BaseReadController<SRS, DRS> {
         ResourceRequestContext context = requestContext();
         ResourceRequestContextHolder.set(context);
         try {
+            requireSingleQueryFilter(request);
             hook.beforeFindByRequest(request, context);
             ApiResponse<DRS> response = ApiResponse.ok(service.findBy(request.getFilter()));
             hook.afterFindByResponse(response, request, context);
@@ -231,6 +235,40 @@ public abstract class BaseReadController<SRS, DRS> {
             return response;
         } finally {
             ResourceRequestContextHolder.clear();
+        }
+    }
+
+    /**
+     * Decodes a public resource ID into its internal numeric ID.
+     *
+     * @param id public encoded identifier
+     * @return decoded internal numeric identifier
+     */
+    protected Long decodeId(String id) {
+        try {
+            Long decoded = idCodec.decode(id);
+            if (decoded == null) {
+                throw invalidId();
+            }
+            return decoded;
+        } catch (IllegalArgumentException ex) {
+            throw invalidId();
+        }
+    }
+
+    private BadRequestException invalidId() {
+        return BadRequestException.of(ErrorDetail.of(
+                "INVALID_ID",
+                "id",
+                "error.id.invalid"));
+    }
+
+    private void requireSingleQueryFilter(QueryRequest request) {
+        if (request == null || request.getFilter() == null) {
+            throw BusinessException.of(ErrorDetail.of(
+                    "QUERY_ONE_FILTER_REQUIRED",
+                    "filter",
+                    "error.query.one.filterRequired"));
         }
     }
 

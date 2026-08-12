@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import gasi.one.core.api.common.exception.BusinessException;
+import gasi.one.core.api.common.exception.ErrorDetail;
 
 /**
  * Resolves public API filter and sort fields to JPA entity field names.
@@ -35,12 +36,18 @@ public final class FilterableFieldResolver {
      */
     public static String resolve(Class<?> entityClass, String publicField) {
         if (publicField == null || publicField.isBlank()) {
-            throw new BusinessException("Filter field is required");
+            throw BusinessException.of(ErrorDetail.of(
+                    "FILTER_FIELD_REQUIRED",
+                    "field",
+                    "error.filter.fieldRequired"));
         }
 
         String entityField = resolvePath(entityClass, publicField);
         if (entityField == null) {
-            throw new BusinessException("Filter field is not allowed: " + publicField);
+            throw BusinessException.of(ErrorDetail.of(
+                    "FILTER_FIELD_NOT_ALLOWED",
+                    publicField,
+                    "error.filter.fieldNotAllowed"));
         }
         return entityField;
     }

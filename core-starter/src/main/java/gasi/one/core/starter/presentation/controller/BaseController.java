@@ -148,7 +148,7 @@ public abstract class BaseController<D extends BaseModel, CRQ, URQ, SRS, DRS>
         ResourceRequestContextHolder.set(context);
         try {
             hook.beforeUpdateRequest(id, request, context);
-            ApiResponse<DRS> response = ApiResponse.ok(service.update(getIdCodec().decode(id), request));
+            ApiResponse<DRS> response = ApiResponse.ok(service.update(decodeId(id), request));
             hook.afterUpdateResponse(response, id, request, context);
             return response;
         } finally {
@@ -160,21 +160,18 @@ public abstract class BaseController<D extends BaseModel, CRQ, URQ, SRS, DRS>
      * Deletes a resource by its identifier.
      *
      * @param id the resource identifier
-     * @return an empty success response
      */
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasPermission(this, 'DELETE')")
-    public ApiResponse<Void> delete(@PathVariable String id) {
+    public void delete(@PathVariable String id) {
         ResourceControllerHook<CRQ, URQ, SRS, DRS> hook = controllerHook();
         ResourceRequestContext context = requestContext();
         ResourceRequestContextHolder.set(context);
         try {
             hook.beforeDeleteRequest(id, context);
-            service.delete(getIdCodec().decode(id));
-            ApiResponse<Void> response = ApiResponse.noContent();
-            hook.afterDeleteResponse(response, id, context);
-            return response;
+            service.delete(decodeId(id));
+            hook.afterDeleteResponse(ApiResponse.noContent(), id, context);
         } finally {
             ResourceRequestContextHolder.clear();
         }
